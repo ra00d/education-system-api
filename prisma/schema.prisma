@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model login_attempt {
+  id                Int       @id @default(autoincrement()) @map("attempt_id")
+  user_id           Int?
+  ip_address        String
+  attempt_timestamp DateTime? @default(now())
+  success           Boolean?
+  users             user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model permission {
+  id              Int     @id @default(autoincrement()) @map("permission_id")
+  permission_name String
+  description     String?
+  roles           role[]
+}
+
+model role {
+  id          Int          @id @default(autoincrement()) @map("role_id")
+  role_name   String
+  description String?
+  users       user[]
+  permissions permission[]
+}
+
+model user_session {
+  id         Int       @id @default(autoincrement()) @map("session_id")
+  user_id    Int?
+  jwt_token  String
+  created_at DateTime? @default(now())
+  expires_at DateTime
+  is_active  Boolean?  @default(true)
+  users      user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id             Int             @id @default(autoincrement()) @map("user_id")
+  username       String          @unique
+  password_hash  String
+  email          String          @unique
+  created_at     DateTime?       @default(now())
+  updated_at     DateTime        @updatedAt
+  last_login     DateTime?
+  is_active      Boolean?        @default(true)
+  login_attempts login_attempt[]
+  user_sessions  user_session[]
+  role           role            @relation(fields: [roleRole_id], references: [id])
+  roleRole_id    Int
+  student        student[]
+  teacher        teacher[]
+}
+
+model student {
+  id                   Int                    @id
+  user                 user                   @relation(fields: [id], references: [id])
+  conected             Boolean                @default(false)
+  level                level                  @relation(fields: [levelId], references: [id])
+  activities           activity[]
+  homeworks            homework[]
+  exams                exam[]
+  levelId              Int
+  activitiesOnStudents activitiesOnStudents[]
+  homesOnStudents      homeworksOnStudents[]
+  examsOnStudents      examsOnStudents[]
+}
+
+model teacher {
+  id         Int        @id @default(autoincrement())
+  user       user       @relation(fields: [userId], references: [id])
+  levels     level[]
+  userId     Int
+  activities activity[]
+  exams      exam[]
+  homeworks  homework[]
+}
+
+model level {
+  id         Int        @id @default(autoincrement())
+  name       String
+  student    student[]
+  teacher    teacher[]
+  activities activity[]
+  exams      exam[]
+  homeworks  homework[]
+}
+
+model activity {
+  id                   Int                    @id @default(autoincrement())
+  content              String
+  students             student[]
+  level                level?                 @relation(fields: [levelId], references: [id])
+  levelId              Int?
+  teacher              teacher?               @relation(fields: [teacherId], references: [id])
+  teacherId            Int?
+  activitiesOnStudents activitiesOnStudents[]
+}
+
+model homework {
+  id              Int                   @id @default(autoincrement())
+  content         String
+  students        student[]
+  created_at      DateTime              @default(now())
+  updated_at      DateTime              @updatedAt
+  level           level?                @relation(fields: [levelId], references: [id])
+  levelId         Int?
+  teacher         teacher?              @relation(fields: [teacherId], references: [id])
+  teacherId       Int?
+  homesOnStudents homeworksOnStudents[]
+}
+
+model exam {
+  id              Int               @id @default(autoincrement())
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  level           level?            @relation(fields: [levelId], references: [id])
+  levelId         Int?
+  student         student?          @relation(fields: [studentId], references: [id])
+  studentId       Int?
+  teacher         teacher?          @relation(fields: [teacherId], references: [id])
+  teacherId       Int?
+  examsOnStudents examsOnStudents[]
+}
+
+model activitiesOnStudents {
+  student    student   @relation(fields: [studentId], references: [id])
+  activity   activity  @relation(fields: [activityId], references: [id])
+  created_at DateTime  @default(now())
+  finish_at  DateTime?
+  score      Float
+  studentId  Int
+  activityId Int
+
+  @@id([studentId, activityId])
+  @@map("activitieOnStudents")
+}
+
+model homeworksOnStudents {
+  student    student   @relation(fields: [studentId], references: [id])
+  homework   homework  @relation(fields: [homeworkId], references: [id])
+  created_at DateTime  @default(now())
+  finish_at  DateTime?
+  score      Float
+  studentId  Int
+  homeworkId Int
+
+  @@id([studentId])
+  @@map("homeworksOnStudents")
+}
+
+model examsOnStudents {
+  student    student  @relation(fields: [studentId], references: [id])
+  exam       exam     @relation(fields: [examId], references: [id])
+  created_at DateTime @default(now())
+  taken_at   DateTime
+  score      Float
+
+  studentId Int
+  examId    Int
+
+  @@id([examId, studentId])
+}
