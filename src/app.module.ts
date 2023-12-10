@@ -7,8 +7,10 @@ import { DatabaseModule } from "./database/database.module";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthGuard } from "./auth/auth.guard";
 import { JwtModule } from "@nestjs/jwt";
-import { TeacherModule } from './resources/teacher/teacher.module';
-import { StudentModule } from './resources/student/student.module';
+import { TeacherModule } from "./resources/teacher/teacher.module";
+import { StudentModule } from "./resources/student/student.module";
+import { CommonModule } from "./common/common.module";
+import { CourseModule } from './resources/course/course.module';
 
 @Module({
 	imports: [
@@ -31,14 +33,16 @@ import { StudentModule } from './resources/student/student.module';
 		AuthModule,
 		TeacherModule,
 		StudentModule,
+		CommonModule,
+		CourseModule,
 	],
 	controllers: [AppController],
 	providers: [
 		AppService,
-		{
-			provide: APP_GUARD,
-			useClass: AuthGuard,
-		},
+		// {
+		// 	provide: APP_GUARD,
+		// 	useClass: AuthGuard,
+		// },
 	],
 })
 export class AppModule {}
