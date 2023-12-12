@@ -23,7 +23,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 	withExtension() {
 		return this.$extends(extension).$extends({
 			model: {
-				user: {
+				users: {
 					async signUp(
 						email: string,
 						password: string,

@@ -3,211 +3,208 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-model login_attempt {
-  id                Int       @id @default(autoincrement()) @map("attempt_id")
-  user_id           Int?
-  ip_address        String
-  attempt_timestamp DateTime? @default(now())
-  success           Boolean?
-  users             user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model CourseProgress {
+  progressID            Int       @id @default(autoincrement())
+  studentID             Int?
+  courseID              Int?
+  progressPercentage    Int?
+  lastActivityTimestamp DateTime?
+  courses               Courses?  @relation(fields: [courseID], references: [courseID], onDelete: NoAction, onUpdate: NoAction)
+  students              Students? @relation(fields: [studentID], references: [studentID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model permission {
-  id              Int     @id @default(autoincrement()) @map("permission_id")
-  permission_name String
-  description     String?
-  roles           role[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Courses {
+  courseID       Int              @id @default(autoincrement())
+  courseName     String
+  description    String?
+  levelID        Int?
+  courseProgress CourseProgress[]
+  levels         Levels?          @relation(fields: [levelID], references: [levelID], onDelete: NoAction, onUpdate: NoAction)
+  exams          Exams[]
+  materials      Materials[]
+  userActivities UserActivities[]
 }
 
-model role {
-  id          Int          @id @default(autoincrement()) @map("role_id")
-  role_name   String
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ExamQuestions {
+  examQuestionID Int        @id @default(autoincrement())
+  examID         Int?
+  questionID     Int?
+  questionOrder  Int?
+  questions      Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
+  exams          Exams?     @relation(fields: [examID], references: [examID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model ExamResults {
+  examResultID   Int       @id @default(autoincrement())
+  examID         Int?
+  studentID      Int?
+  score          Int?
+  submissionTime DateTime?
+  students       Students? @relation(fields: [studentID], references: [studentID], onDelete: NoAction, onUpdate: NoAction)
+  exams          Exams?    @relation(fields: [examID], references: [examID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Exams {
+  examID         Int              @id @default(autoincrement())
+  teacherID      Int?
+  title          String
+  description    String?
+  startTime      DateTime?
+  endTime        DateTime?
+  duration       Int?
+  levelID        Int?
+  courseID       Int?
+  examQuestions  ExamQuestions[]
+  examResults    ExamResults[]
+  courses        Courses?         @relation(fields: [courseID], references: [courseID], onDelete: NoAction, onUpdate: NoAction)
+  levels         Levels?          @relation(fields: [levelID], references: [levelID], onDelete: NoAction, onUpdate: NoAction)
+  teachers       Teachers?        @relation(fields: [teacherID], references: [teacherID], onDelete: NoAction, onUpdate: NoAction)
+  userActivities UserActivities[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model FillInTheBlankQuestions {
+  fillInTheBlankQuestionID Int        @id @default(autoincrement())
+  questionID               Int?
+  correctAnswers           String?
+  questions                Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Levels {
+  levelID     Int         @id @default(autoincrement())
+  levelName   String
   description String?
-  users       user[]
-  permissions permission[]
+  courses     Courses[]
+  exams       Exams[]
+  materials   Materials[]
+  users       Users[]
 }
 
-model user_session {
-  id         Int       @id @default(autoincrement()) @map("session_id")
-  user_id    Int?
-  jwt_token  String
-  created_at DateTime? @default(now())
-  expires_at DateTime
-  is_active  Boolean?  @default(true)
-  users      user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Materials {
+  materialID      Int              @id @default(autoincrement())
+  teacherID       Int?
+  title           String
+  description     String?
+  fileURL         String?
+  requiredLevelID Int?
+  courseID        Int?
+  courses         Courses?         @relation(fields: [courseID], references: [courseID], onDelete: NoAction, onUpdate: NoAction)
+  levels          Levels?          @relation(fields: [requiredLevelID], references: [levelID], onDelete: NoAction, onUpdate: NoAction)
+  teachers        Teachers?        @relation(fields: [teacherID], references: [teacherID], onDelete: NoAction, onUpdate: NoAction)
+  userActivities  UserActivities[]
 }
 
-model user {
-  id             Int             @id @default(autoincrement()) @map("user_id")
-  username       String          @unique
-  name           String?
-  password_hash  String
-  email          String          @unique
-  created_at     DateTime?       @default(now())
-  updated_at     DateTime        @updatedAt
-  last_login     DateTime?
-  is_active      Boolean?        @default(true)
-  login_attempts login_attempt[]
-  user_sessions  user_session[]
-  role           role            @relation(fields: [roleRole_id], references: [id])
-  roleRole_id    Int
-  student        student[]
-  teacher        teacher[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Options {
+  optionID   Int        @id @default(autoincrement())
+  questionID Int?
+  optionText String
+  isCorrect  Boolean?
+  questions  Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model student {
-  id                   Int                    @id
-  user                 user                   @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  conected             Boolean                @default(false)
-  level                level?                 @relation(fields: [levelId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  activities           activity[]
-  homeworks            homework[]
-  exams                exam[]
-  levelId              Int?
-  activitiesOnStudents activitiesOnStudents[]
-  homesOnStudents      homeworksOnStudents[]
-  examsOnStudents      examsOnStudents[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model OrderQuestions {
+  orderQuestionID Int        @id @default(autoincrement())
+  questionID      Int?
+  correctOrder    String?
+  questions       Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model teacher {
-  id         Int        @id @default(autoincrement())
-  user       user       @relation(fields: [userId], references: [id])
-  levels     level[]
-  userId     Int
-  activities activity[]
-  exams      exam[]
-  homeworks  homework[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Questions {
+  questionID              Int                       @id @default(autoincrement())
+  teacherID               Int?
+  questionText            String
+  questionType            String
+  examQuestions           ExamQuestions[]
+  fillInTheBlankQuestions FillInTheBlankQuestions[]
+  options                 Options[]
+  orderQuestions          OrderQuestions[]
+  teachers                Teachers?                 @relation(fields: [teacherID], references: [teacherID], onDelete: NoAction, onUpdate: NoAction)
+  wordSearchQuestions     WordSearchQuestions[]
+  yesNoQuestions          YesNoQuestions[]
 }
 
-model level {
-  id         Int        @id @default(autoincrement())
-  name       String
-  student    student[]
-  teacher    teacher[]
-  activities activity[]
-  exams      exam[]
-  homeworks  homework[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Students {
+  studentID      Int              @id @default(autoincrement())
+  userID         Int?             @unique(map: "sqlite_autoindex_Students_1")
+  firstName      String
+  lastName       String
+  email          String?
+  courseProgress CourseProgress[]
+  examResults    ExamResults[]
+  users          Users?           @relation(fields: [userID], references: [userID], onDelete: NoAction, onUpdate: NoAction)
+  userActivities UserActivities[]
 }
 
-model activity {
-  id                   Int                    @id @default(autoincrement())
-  content              String
-  students             student[]
-  level                level?                 @relation(fields: [levelId], references: [id])
-  levelId              Int?
-  teacher              teacher?               @relation(fields: [teacherId], references: [id])
-  teacherId            Int?
-  activitiesOnStudents activitiesOnStudents[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Teachers {
+  teacherID Int         @id @default(autoincrement())
+  userID    Int?        @unique(map: "sqlite_autoindex_Teachers_1")
+  firstName String
+  lastName  String
+  email     String?
+  exams     Exams[]
+  materials Materials[]
+  questions Questions[]
+  users     Users?      @relation(fields: [userID], references: [userID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model homework {
-  id              Int                   @id @default(autoincrement())
-  content         String
-  students        student[]
-  created_at      DateTime              @default(now())
-  updated_at      DateTime              @updatedAt
-  level           level?                @relation(fields: [levelId], references: [id])
-  levelId         Int?
-  teacher         teacher?              @relation(fields: [teacherId], references: [id])
-  teacherId       Int?
-  homesOnStudents homeworksOnStudents[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model UserActivities {
+  activityID Int        @id @default(autoincrement())
+  userID     Int?
+  studentID  Int?
+  materialID Int?
+  examID     Int?
+  timestamp  DateTime?
+  score      Int?
+  courseID   Int?
+  courses    Courses?   @relation(fields: [courseID], references: [courseID], onDelete: NoAction, onUpdate: NoAction)
+  exams      Exams?     @relation(fields: [examID], references: [examID], onDelete: NoAction, onUpdate: NoAction)
+  materials  Materials? @relation(fields: [materialID], references: [materialID], onDelete: NoAction, onUpdate: NoAction)
+  students   Students?  @relation(fields: [studentID], references: [studentID], onDelete: NoAction, onUpdate: NoAction)
+  users      Users?     @relation(fields: [userID], references: [userID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model exam {
-  id              Int               @id @default(autoincrement())
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  level           level?            @relation(fields: [levelId], references: [id])
-  levelId         Int?
-  student         student?          @relation(fields: [studentId], references: [id])
-  studentId       Int?
-  teacher         teacher?          @relation(fields: [teacherId], references: [id])
-  teacherId       Int?
-  examsOnStudents examsOnStudents[]
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Users {
+  userID         Int              @id @default(autoincrement())
+  username       String
+  password       String
+  userType       String
+  levelID        Int?
+  students       Students?
+  teachers       Teachers?
+  userActivities UserActivities[]
+  levels         Levels?          @relation(fields: [levelID], references: [levelID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model activitiesOnStudents {
-  student    student   @relation(fields: [studentId], references: [id])
-  activity   activity  @relation(fields: [activityId], references: [id])
-  created_at DateTime  @default(now())
-  finish_at  DateTime?
-  score      Float
-  studentId  Int
-  activityId Int
-
-  @@id([studentId, activityId])
-  @@map("activitieOnStudents")
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model WordSearchQuestions {
+  wordSearchQuestionID Int        @id @default(autoincrement())
+  questionID           Int?
+  wordList             String?
+  questions            Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model homeworksOnStudents {
-  student    student   @relation(fields: [studentId], references: [id])
-  homework   homework  @relation(fields: [homeworkId], references: [id])
-  created_at DateTime  @default(now())
-  finish_at  DateTime?
-  score      Float
-  studentId  Int
-  homeworkId Int
-
-  @@id([studentId])
-  @@map("homeworksOnStudents")
-}
-
-model examsOnStudents {
-  student    student  @relation(fields: [studentId], references: [id])
-  exam       exam     @relation(fields: [examId], references: [id])
-  created_at DateTime @default(now())
-  taken_at   DateTime
-  score      Float
-
-  studentId Int
-  examId    Int
-
-  @@id([examId, studentId])
-}
-
-enum questionType {
-  WRITING
-  MULTY_CHOICE
-  YES_OR_NO
-  CROSS_WORD
-  WORD_SEARCH
-  FILL_IN_BLANK
-  ORDER
-  REORDER
-  SPELLING
-  MATCHING
-}
-
-model question {
-  id                   Int                    @id @default(autoincrement())
-  type                 questionType           @default(WRITING)
-  multyQuestionAnswer  multyQuestionAnswer[]
-  yesOrNoAnswer        yesOrNoAnswer[]
-  fillInTheBlankAnswer fillInTheBlankAnswer[]
-}
-
-model multyQuestionAnswer {
-  id         Int      @id @default(autoincrement())
-  // answer 
-  question   question @relation(fields: [questionId], references: [id])
-  answer     String
-  questionId Int
-}
-
-model yesOrNoAnswer {
-  id         Int      @id @default(autoincrement())
-  answer     Boolean
-  question   question @relation(fields: [questionId], references: [id])
-  questionId Int
-}
-
-model fillInTheBlankAnswer {
-  id         Int      @id @default(autoincrement())
-  answer     String
-  question   question @relation(fields: [questionId], references: [id])
-  questionId Int
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model YesNoQuestions {
+  yesNoQuestionID Int        @id @default(autoincrement())
+  questionID      Int?
+  correctAnswer   Boolean?
+  questions       Questions? @relation(fields: [questionID], references: [questionID], onDelete: NoAction, onUpdate: NoAction)
 }

@@ -1,7 +1,7 @@
 -- Users Table
 CREATE TABLE
   Users (
-    UserID INT PRIMARY KEY,
+    UserID INTEGER PRIMARY KEY AUTOINCREMENT,
     Username VARCHAR(255) NOT NULL,
     Password VARCHAR(255) NOT NULL,
     UserType VARCHAR(20) NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE
 -- Teachers Table
 CREATE TABLE
   Teachers (
-    TeacherID INT PRIMARY KEY,
+    TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID INT UNIQUE,
     FirstName VARCHAR(255) NOT NULL,
     LastName VARCHAR(255) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE
 -- Students Table
 CREATE TABLE
   Students (
-    StudentID INT PRIMARY KEY,
+    StudentID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID INT UNIQUE,
     FirstName VARCHAR(255) NOT NULL,
     LastName VARCHAR(255) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE
 -- Levels Table
 CREATE TABLE
   Levels (
-    LevelID INT PRIMARY KEY,
+    LevelID INTEGER PRIMARY KEY AUTOINCREMENT,
     LevelName VARCHAR(50) NOT NULL,
     Description TEXT
   );
@@ -43,7 +43,7 @@ CREATE TABLE
 --TODO Add teacher to course
 CREATE TABLE
   Courses (
-    CourseID INT PRIMARY KEY,
+    CourseID INTEGER PRIMARY KEY AUTOINCREMENT,
     CourseName VARCHAR(255) NOT NULL,
     Description TEXT,
     LevelID INT,
@@ -53,7 +53,7 @@ CREATE TABLE
 -- Materials Table
 CREATE TABLE
   Materials (
-    MaterialID INT PRIMARY KEY,
+    MaterialID INTEGER PRIMARY KEY AUTOINCREMENT,
     TeacherID INT,
     Title VARCHAR(255) NOT NULL,
     Description TEXT,
@@ -68,7 +68,7 @@ CREATE TABLE
 -- Questions Table
 CREATE TABLE
   Questions (
-    QuestionID INT PRIMARY KEY,
+    QuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     TeacherID INT,
     QuestionText TEXT NOT NULL,
     QuestionType VARCHAR(50) NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE
 -- Options Table
 CREATE TABLE
   Options (
-    OptionID INT PRIMARY KEY,
+    OptionID INTEGER PRIMARY KEY AUTOINCREMENT,
     QuestionID INT,
     OptionText TEXT NOT NULL,
     IsCorrect BOOLEAN,
@@ -88,7 +88,7 @@ CREATE TABLE
 -- YesNoQuestions Table
 CREATE TABLE
   YesNoQuestions (
-    YesNoQuestionID INT PRIMARY KEY,
+    YesNoQuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     QuestionID INT,
     CorrectAnswer BOOLEAN,
     FOREIGN KEY (QuestionID) REFERENCES Questions (QuestionID)
@@ -97,7 +97,7 @@ CREATE TABLE
 -- WordSearchQuestions Table
 CREATE TABLE
   WordSearchQuestions (
-    WordSearchQuestionID INT PRIMARY KEY,
+    WordSearchQuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     QuestionID INT,
     WordList TEXT,
     FOREIGN KEY (QuestionID) REFERENCES Questions (QuestionID)
@@ -106,7 +106,7 @@ CREATE TABLE
 -- FillInTheBlankQuestions Table
 CREATE TABLE
   FillInTheBlankQuestions (
-    FillInTheBlankQuestionID INT PRIMARY KEY,
+    FillInTheBlankQuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     QuestionID INT,
     CorrectAnswers TEXT,
     FOREIGN KEY (QuestionID) REFERENCES Questions (QuestionID)
@@ -115,7 +115,7 @@ CREATE TABLE
 -- OrderQuestions Table
 CREATE TABLE
   OrderQuestions (
-    OrderQuestionID INT PRIMARY KEY,
+    OrderQuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     QuestionID INT,
     CorrectOrder TEXT,
     FOREIGN KEY (QuestionID) REFERENCES Questions (QuestionID)
@@ -124,7 +124,7 @@ CREATE TABLE
 -- Exams Table
 CREATE TABLE
   Exams (
-    ExamID INT PRIMARY KEY,
+    ExamID INTEGER PRIMARY KEY AUTOINCREMENT,
     TeacherID INT,
     Title VARCHAR(255) NOT NULL,
     Description TEXT,
@@ -141,7 +141,7 @@ CREATE TABLE
 -- ExamQuestions Table
 CREATE TABLE
   ExamQuestions (
-    ExamQuestionID INT PRIMARY KEY,
+    ExamQuestionID INTEGER PRIMARY KEY AUTOINCREMENT,
     ExamID INT,
     QuestionID INT,
     QuestionOrder INT,
@@ -152,7 +152,7 @@ CREATE TABLE
 -- ExamResults Table
 CREATE TABLE
   ExamResults (
-    ExamResultID INT PRIMARY KEY,
+    ExamResultID INTEGER PRIMARY KEY AUTOINCREMENT,
     ExamID INT,
     StudentID INT,
     Score INT,
@@ -164,7 +164,7 @@ CREATE TABLE
 -- UserActivities Table
 CREATE TABLE
   UserActivities (
-    ActivityID INT PRIMARY KEY,
+    ActivityID INTEGER PRIMARY KEY AUTOINCREMENT,
     UserID INT,
     StudentID INT,
     MaterialID INT,
@@ -182,7 +182,7 @@ CREATE TABLE
 -- CourseProgress Table
 CREATE TABLE
   CourseProgress (
-    ProgressID INT PRIMARY KEY,
+    ProgressID INTEGER PRIMARY KEY AUTOINCREMENT,
     StudentID INT,
     CourseID INT,
     ProgressPercentage INT,

@@ -3,34 +3,30 @@ import { faker } from "@faker-js/faker";
 const prisma = new PrismaClient({ log: ["query"] });
 
 const users = () => {
-	const fakeUsers: Prisma.userCreateInput[] = [];
+	const fakeUsers: Prisma.StudentsCreateInput[] = [];
 	for (let i = 0; i < 40; i++) {
 		fakeUsers.push({
 			email: faker.internet.email({
 				firstName: faker.person.firstName(),
 				lastName: faker.person.lastName(),
 			}),
-			username: faker.internet.email({
-				firstName: faker.person.firstName(),
-				lastName: faker.person.lastName(),
-			}),
-			role: {
-				connect: {
-					id: 1,
-				},
-			},
-			password_hash: faker.internet.password(),
-
-			student: {
+			firstName: faker.person.firstName(),
+			lastName: faker.person.lastName(),
+			users: {
 				create: {
-					conected: false,
-					level: {
+					password: faker.internet.password(),
+					username: faker.internet.email({
+						firstName: faker.person.firstName(),
+						lastName: faker.person.lastName(),
+					}),
+					userType: "STUDENT",
+					levels: {
 						connectOrCreate: {
 							where: {
-								id: 2,
+								levelID: 1,
 							},
 							create: {
-								name: "Second",
+								levelName: "Level 1A",
 							},
 						},
 					},
@@ -41,21 +37,10 @@ const users = () => {
 	return fakeUsers;
 };
 async function main() {
-	const allStudent = users();
-
-	Promise.allSettled(
-		allStudent.map(async (user) => await prisma.user.create({ data: user })),
-	).then((res) => {
-		for (const result of res) {
-			console.log(result);
-		}
-	});
-	// await prisma.user.createMany({
-	// 	skipDuplicates: true,
-	// 	data: allStudent,
-	// });
-	// console.log(roles);
-	// console.log(students);
+	const data = users();
+	for (let index = 0; index < data.length; index++) {
+		await prisma.students.create({ data: data[index] });
+	}
 }
 main()
 	.then(async () => {
