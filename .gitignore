@@ -39,4 +39,5 @@ lerna-debug.log*
 MakeFile
 *.hcl
 pyproject.toml
+./uploads/*
 
