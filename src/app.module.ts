@@ -1,19 +1,25 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
-import { DatabaseModule } from "./database/database.module";
-import { APP_GUARD } from "@nestjs/core";
-import { AuthGuard } from "./auth/auth.guard";
-import { JwtModule } from "@nestjs/jwt";
-import { TeacherModule } from "./resources/teacher/teacher.module";
-import { StudentModule } from "./resources/student/student.module";
 import { CommonModule } from "./common/common.module";
-import { CourseModule } from './resources/course/course.module';
+import { DatabaseModule } from "./database/database.module";
+import { CourseModule } from "./resources/course/course.module";
+import { LevelModule } from "./resources/level/level.module";
+import { MaterialsModule } from "./resources/materials/materials.module";
+import { QuestionsModule } from "./resources/questions/questions.module";
+import { StudentModule } from "./resources/student/student.module";
+import { TeacherModule } from "./resources/teacher/teacher.module";
+import { join } from "path";
+import { ServeStaticModule } from "@nestjs/serve-static";
 
 @Module({
 	imports: [
+		ServeStaticModule.forRoot({
+			rootPath: "uploads",
+		}),
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
@@ -29,12 +35,16 @@ import { CourseModule } from './resources/course/course.module';
 				};
 			},
 		}),
+
 		DatabaseModule,
 		AuthModule,
 		TeacherModule,
 		StudentModule,
 		CommonModule,
 		CourseModule,
+		LevelModule,
+		QuestionsModule,
+		MaterialsModule,
 	],
 	controllers: [AppController],
 	providers: [

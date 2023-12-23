@@ -13,7 +13,7 @@ export class AuthService {
 		private configService: ConfigService,
 	) {}
 
-	async signUp(user: Prisma.UsersCreateInput) {
+	async signUp(user: Prisma.usersCreateInput) {
 		const salt = await bcrypt.genSalt();
 		const password_hash = await bcrypt.hash(user?.password, salt);
 		const userData = this.databaseService.users.create({

@@ -1,46 +1,39 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { faker } from "@faker-js/faker";
+import * as bcrypt from "bcrypt";
 const prisma = new PrismaClient({ log: ["query"] });
 
-const users = () => {
-	const fakeUsers: Prisma.StudentsCreateInput[] = [];
-	for (let i = 0; i < 40; i++) {
-		fakeUsers.push({
-			email: faker.internet.email({
-				firstName: faker.person.firstName(),
-				lastName: faker.person.lastName(),
-			}),
-			firstName: faker.person.firstName(),
-			lastName: faker.person.lastName(),
-			users: {
-				create: {
-					password: faker.internet.password(),
-					username: faker.internet.email({
-						firstName: faker.person.firstName(),
-						lastName: faker.person.lastName(),
-					}),
-					userType: "STUDENT",
-					levels: {
-						connectOrCreate: {
-							where: {
-								levelID: 1,
-							},
-							create: {
-								levelName: "Level 1A",
-							},
-						},
-					},
-				},
-			},
-		});
-	}
-	return fakeUsers;
-};
+const generatePassword = async () => await bcrypt.hash("admin", 10);
+const levels: Prisma.LevelCreateInput[] = [
+	{
+		name: "Level 1",
+	},
+	{
+		name: "Level 2",
+	},
+	{
+		name: "Level 3",
+	},
+	{
+		name: "Level 4",
+	},
+];
+
 async function main() {
-	const data = users();
-	for (let index = 0; index < data.length; index++) {
-		await prisma.students.create({ data: data[index] });
-	}
+	const password = await generatePassword();
+	const admin: Prisma.usersCreateInput = {
+		name: "admin",
+		email: "admin@email.com",
+		password,
+		role: "ADMIN",
+		phone: "0000000000",
+	};
+
+	await prisma.users.create({
+		data: admin,
+	});
+	await prisma.level.createMany({
+		data: levels,
+	});
 }
 main()
 	.then(async () => {

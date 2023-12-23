@@ -3,10 +3,11 @@ import {
 	Catch,
 	ArgumentsHost,
 	HttpException,
+	InternalServerErrorException,
 } from "@nestjs/common";
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 
-@Catch()
+@Catch(InternalServerErrorException)
 export class HttpExceptionFilter implements ExceptionFilter {
 	catch(exception: HttpException, host: ArgumentsHost) {
 		const ctx = host.switchToHttp();

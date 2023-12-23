@@ -9,10 +9,14 @@ import * as bcrypt from "bcrypt";
 
 export type DatabaseService = ReturnType<PrismaService["withExtension"]>;
 
+export type FindManyArgs<Model, Args> = Prisma.Exact<
+	Args,
+	Prisma.Args<Model, "findMany">
+>;
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
 	constructor() {
-		super({ log: ["query", "info"] });
+		super({ log: ["query", "info", "error"] });
 		// super.$executeRaw
 	}
 
@@ -21,8 +25,26 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 	}
 
 	withExtension() {
+		// const client = Prisma.getExtensionContext(this);
 		return this.$extends(extension).$extends({
+			name: "soft-delete",
 			model: {
+				$allModels: {
+					async all<Model, Args>(
+						this: Model,
+						args?: Prisma.Args<Model, "findMany">,
+						// model?: Model,
+					) {
+						// console.log(typeof model);
+						args.where = { ...args.where, deleted_at: null };
+
+						return await (this as any).findMany(args);
+
+						// if  {
+						// }
+						// args;
+					},
+				},
 				users: {
 					async signUp(
 						email: string,
@@ -31,7 +53,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 					) {
 						const client = Prisma.getExtensionContext(this);
 						const hash = await bcrypt.hash(password, 10);
-						return client.user.create({
+						return client.users.create({
 							data: {
 								email,
 								username: email,
@@ -92,8 +114,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 				},
 			},
 		});
-
-		// return client;
 	}
 
 	async hashPassword(pass: string): Promise<string> {

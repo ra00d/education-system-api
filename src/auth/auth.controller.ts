@@ -9,7 +9,7 @@ export class AuthController {
 	constructor(private authService: AuthService) {}
 
 	@Post("sign-up")
-	signUp(@Body() user: Prisma.UsersCreateInput) {
+	signUp(@Body() user: Prisma.usersCreateInput) {
 		return this.authService.signUp(user);
 	}
 	@Post("log-in")

@@ -1,85 +1,183 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import {
+	Inject,
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+} from "@nestjs/common";
+import { CommonService } from "src/common/common.service";
+import { DatabaseService } from "src/database/database.service";
 import { CreateStudentDto } from "./dto/create-student.dto";
 import { UpdateStudentDto } from "./dto/update-student.dto";
-import { DatabaseService } from "src/database/database.service";
-import { CommonService } from "src/common/common.service";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { $Enums } from "@prisma/client";
 
 @Injectable()
 export class StudentService {
 	constructor(
 		@Inject("DATABASE")
-		private readonly studentModel: DatabaseService,
+		private readonly databaseService: DatabaseService,
 		private readonly commonService: CommonService,
 	) {}
 	async create(createStudentDto: CreateStudentDto) {
 		const pass_hash = await this.commonService.hashPassword(
 			createStudentDto.password,
 		);
-		return await this.studentModel.students.create({
+		// try {
+		const student = await this.databaseService.students.create({
 			data: {
-				email: createStudentDto.email,
-				lastName: createStudentDto.name,
-				firstName: createStudentDto.name,
-				users: {
+				level: {
+					connect: {
+						id: createStudentDto.level,
+					},
+				},
+				user: {
 					create: {
+						name: createStudentDto.name,
+						email: createStudentDto.email,
 						password: pass_hash,
-						username: createStudentDto.email,
-						userType: "STUDENT",
+						phone: createStudentDto.phone,
 					},
 				},
 			},
 		});
+		// } catch (err: unknown) {
+		// 	if (err instanceof PrismaClientKnownRequestError) {
+		// 		if (err.code === "P2002")
+		// 			if (err.meta?.target === "user_email_key") {
+		// 				throw new UnprocessableEntityException(
+		// 					"the email address is allready used",
+		//
+		// 					{
+		// 						cause: Prisma.PrismaClientKnownRequestError,
+		// 						description: "the email address is allready used",
+		// 					},
+		// 				);
+		// 			}
+		// 	}
+		// 	throw new InternalServerErrorException();
+		// }
+		return student;
 	}
 
 	async findAll(page = 1, limit = 10) {
-		// Logger.debug("query start");
-		const students = await this.studentModel.students.paginate(
-			{
+		try {
+			const students = await this.databaseService.students.paginate({
+				limit: limit,
+				page: page,
 				include: {
-					users: {
+					user: {
 						select: {
-							username: true,
-							levels: {
-								select: { levelName: true },
+							name: true,
+							email: true,
+							phone: true,
+						},
+					},
+					level: true,
+				},
+			});
+			const result = students.result.map((student) => ({
+				id: student.id,
+				name: student.user.name,
+				level: student.level,
+				email: student.user.email,
+				phone: student.user.phone,
+			}));
+			return {
+				result,
+				count: students.count,
+				// nextPage: `${this.configService.getOrThrow(
+				// 	"SERVER_URL",
+				// )}/student?page=${page + 1}&limit=${
+				// 	students.count / students.totalPages
+				// }`,
+				// hasNextPage: students.hasNextPage,
+				// hasPrevPage: students.hasPrevPage,
+				totalPages: students.totalPages,
+			};
+		} catch {
+			return [];
+		}
+	}
+
+	async findOne(id: string) {
+		// try {
+		const data = await this.databaseService.students.findUniqueOrThrow({
+			where: {
+				id: Number(id),
+				user: {
+					role: $Enums.Role.STUDENT,
+				},
+			},
+			include: {
+				user: {
+					select: {
+						email: true,
+						name: true,
+						phone: true,
+					},
+				},
+				level: true,
+			},
+		});
+		return {
+			level: data.level,
+			...data.user,
+		};
+		// } catch (error: unknown) {
+		// 	if (error instanceof PrismaClientKnownRequestError) {
+		// 		throw new NotFoundException("there is no student with this id");
+		// 	}
+		// 	throw new InternalServerErrorException("internal server error");
+		// }
+	}
+
+	async update(id: string, { level, ...user }: UpdateStudentDto) {
+		// let pass_hash;
+		if (user.password)
+			user.password = await this.commonService.hashPassword(user.password);
+		try {
+			const student = await this.findOne(id);
+			return await this.databaseService.students.update({
+				where: {
+					id: Number(id),
+					user: {
+						role: $Enums.Role.STUDENT,
+					},
+				},
+				data: {
+					level: {
+						connect: {
+							id: level ?? student.level.id,
+						},
+					},
+					user: {
+						update: {
+							where: {
+								id: Number(id),
+							},
+							data: {
+								...user,
 							},
 						},
 					},
 				},
+			});
+		} catch (error) {
+			if (error instanceof PrismaClientKnownRequestError) {
+				throw new NotFoundException("this email is already used", {
+					description: error.stack,
+				});
+			}
+			console.log(error);
+			throw new InternalServerErrorException("internal server error");
+		}
+	}
+
+	async remove(id: number) {
+		return this.databaseService.students.delete({
+			where: {
+				id,
 			},
-			{ page, limit },
-		);
-		const result = students.result.map((student) =>
-			this.commonService.exclude(
-				{
-					id: student.userID,
-					name: student.firstName + " " + student.lastName,
-					level: student.users.levels.levelName,
-					email: student.email,
-				},
-				["password_hash", "user"],
-			),
-		);
-		// Logger.debug("query ends");
-		// Logger.debug(students);
-		return {
-			...students,
-			result,
-			nextPage: students.nextPage(),
-			hasNextPage: students.hasNextPage,
-			hasPrevPage: students.hasPrevPage,
-			totalPages: students.totalPages,
-		};
-	}
-
-	findOne(id: number) {
-		return `This action returns a #${id} student`;
-	}
-
-	update(id: number, updateStudentDto: UpdateStudentDto) {
-		return `This action updates a #${id} student`;
-	}
-
-	remove(id: number) {
-		return `This action removes a #${id} student`;
+		});
 	}
 }

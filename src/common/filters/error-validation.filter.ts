@@ -14,10 +14,14 @@ export class ValidationErrsFilter implements ExceptionFilter {
 
 		const statusCode = exception.getStatus();
 		const errors = exception["response"]["message"];
-		res.send({
-			errors: errors,
+		const message = Array.isArray(errors)
+			? " some inputs are invalide "
+			: errors;
+		res.status(422).send({
+			message,
 			statusCode,
-			message: "Unprocessable content",
+			errors,
+			errorMessage: "Unprocessable content",
 		});
 	}
 }
