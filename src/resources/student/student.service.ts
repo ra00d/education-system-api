@@ -19,17 +19,17 @@ export class StudentService {
 		private readonly commonService: CommonService,
 	) {}
 	async create(createStudentDto: CreateStudentDto) {
-		const pass_hash = await this.commonService.hashPassword(
-			createStudentDto.password,
-		);
+		const pass_hash = await this.commonService.hashPassword("123456");
 		// try {
 		const student = await this.databaseService.students.create({
 			data: {
-				level: {
-					connect: {
-						id: createStudentDto.level,
-					},
-				},
+				// level: {
+				// 	connect: {
+				// 		id: createStudentDto.level,
+				// 	},
+				// },
+				birthdate: createStudentDto.birthdate,
+				grade: createStudentDto.grade,
 				user: {
 					create: {
 						name: createStudentDto.name,
@@ -40,59 +40,31 @@ export class StudentService {
 				},
 			},
 		});
-		// } catch (err: unknown) {
-		// 	if (err instanceof PrismaClientKnownRequestError) {
-		// 		if (err.code === "P2002")
-		// 			if (err.meta?.target === "user_email_key") {
-		// 				throw new UnprocessableEntityException(
-		// 					"the email address is allready used",
-		//
-		// 					{
-		// 						cause: Prisma.PrismaClientKnownRequestError,
-		// 						description: "the email address is allready used",
-		// 					},
-		// 				);
-		// 			}
-		// 	}
-		// 	throw new InternalServerErrorException();
-		// }
 		return student;
 	}
 
-	async findAll(page = 1, limit = 10) {
+	async findAll(page = 0, limit = 10) {
 		try {
-			const students = await this.databaseService.students.paginate({
-				limit: limit,
-				page: page,
-				include: {
-					user: {
-						select: {
-							name: true,
-							email: true,
-							phone: true,
+			const [students, meta] = await this.databaseService.students
+				.paginate({
+					include: {
+						user: {
+							select: {
+								name: true,
+								email: true,
+								phone: true,
+							},
 						},
+						// level: true,
 					},
-					level: true,
-				},
-			});
-			const result = students.result.map((student) => ({
-				id: student.id,
-				name: student.user.name,
-				level: student.level,
-				email: student.user.email,
-				phone: student.user.phone,
-			}));
+				})
+				.withPages({
+					limit,
+					page,
+				});
 			return {
-				result,
-				count: students.count,
-				// nextPage: `${this.configService.getOrThrow(
-				// 	"SERVER_URL",
-				// )}/student?page=${page + 1}&limit=${
-				// 	students.count / students.totalPages
-				// }`,
-				// hasNextPage: students.hasNextPage,
-				// hasPrevPage: students.hasPrevPage,
-				totalPages: students.totalPages,
+				result: students,
+				...meta,
 			};
 		} catch {
 			return [];
@@ -116,11 +88,11 @@ export class StudentService {
 						phone: true,
 					},
 				},
-				level: true,
+				// level: true,
 			},
 		});
 		return {
-			level: data.level,
+			// level: data.level,
 			...data.user,
 		};
 		// } catch (error: unknown) {
@@ -145,11 +117,11 @@ export class StudentService {
 					},
 				},
 				data: {
-					level: {
-						connect: {
-							id: level ?? student.level.id,
-						},
-					},
+					// level: {
+					// 	connect: {
+					// 		id: level ?? student.level.id,
+					// 	},
+					// },
 					user: {
 						update: {
 							where: {

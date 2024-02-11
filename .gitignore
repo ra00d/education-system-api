@@ -38,6 +38,8 @@ lerna-debug.log*
 # LOCALS
 MakeFile
 *.hcl
+*.todo
 pyproject.toml
 ./uploads/*
+
 

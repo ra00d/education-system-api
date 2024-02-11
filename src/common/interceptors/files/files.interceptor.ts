@@ -13,7 +13,7 @@ export class FilesInterceptor implements NestInterceptor {
 		const ctx = context.switchToHttp();
 		return next.handle().pipe(
 			catchError(async (err) => {
-				await rm(`./uploads/${ctx.getRequest().file.filename}`);
+				await rm(`./uploads/courses/${ctx.getRequest().file.filename}`);
 
 				return throwError(() => err);
 			}),

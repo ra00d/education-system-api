@@ -14,12 +14,15 @@ import { StudentModule } from "./resources/student/student.module";
 import { TeacherModule } from "./resources/teacher/teacher.module";
 import { join } from "path";
 import { ServeStaticModule } from "@nestjs/serve-static";
+import { DashboardModule } from "./dashboard/dashboard.module";
+import { ClassesModule } from "./resources/classes/classes.module";
+import { RoomsModule } from './resources/rooms/rooms.module';
 
 @Module({
 	imports: [
-		ServeStaticModule.forRoot({
-			rootPath: "uploads",
-		}),
+		// ServeStaticModule.forRoot({
+		// 	rootPath: join(__dirname, "..", "uploads"),
+		// }),
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
@@ -45,6 +48,9 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 		LevelModule,
 		QuestionsModule,
 		MaterialsModule,
+		DashboardModule,
+		ClassesModule,
+		RoomsModule,
 	],
 	controllers: [AppController],
 	providers: [

@@ -14,11 +14,16 @@ export class ValidationErrsFilter implements ExceptionFilter {
 
 		const statusCode = exception.getStatus();
 		const errors = exception["response"]["message"];
+		let errorFileds = "some";
+		if (Array.isArray(errors)) {
+			errorFileds = errors.map((error) => Object.keys(error)).join();
+		}
 		const message = Array.isArray(errors)
-			? " some inputs are invalide "
+			? `${errorFileds} inputs are invalide `
 			: errors;
 		res.status(422).send({
 			message,
+			errorFileds,
 			statusCode,
 			errors,
 			errorMessage: "Unprocessable content",

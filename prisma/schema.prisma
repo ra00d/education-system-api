@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -21,25 +22,15 @@ enum MaterialType {
   AUDIO
 }
 
-model AnswersOrder {
-  id          Int        @id @default(autoincrement())
-  content     String?
-  num_value   Int?
-  question_id Int?
-  questions   Questions? @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_answers_orders_question")
-
-  @@index([question_id], map: "fk_answers_orders_question")
-  @@map("answers_orders")
-}
-
 model Classes {
   id              Int              @id @default(autoincrement())
+  roomId          String?          @default(uuid()) @map("room_id")
   created_at      DateTime?        @default(now())
   updated_at      DateTime         @updatedAt
-  deleted_at      DateTime?
   name            String?
   description     String?
-  class_time      DateTime?
+  end_at          DateTime         @db.Time()
+  start_at        DateTime         @db.Time()
   course_id       Int?
   teacher_id      Int?
   level_id        Int?
@@ -48,10 +39,11 @@ model Classes {
   teacher         Teachers?        @relation(fields: [teacher_id], references: [id], onDelete: SetNull, onUpdate: Cascade, map: "fk_classes_teacher")
   student_classes StudentClasses[]
 
-  @@index([deleted_at], map: "idx_classes_deleted_at")
   @@index([course_id], map: "fk_classes_course")
   @@index([level_id], map: "fk_classes_level")
   @@index([teacher_id], map: "fk_classes_teacher")
+  @@index([roomId], map: "room_id_idx")
+  @@fulltext([description])
   @@map("classes")
 }
 
@@ -59,9 +51,12 @@ model Courses {
   id              Int              @id @default(autoincrement())
   created_at      DateTime?        @default(now())
   updated_at      DateTime?        @updatedAt
-  deleted_at      DateTime?
   name            String?
   description     String?
+  price           Decimal          @default(0)
+  cover_img       String?
+  start_at        DateTime         @default(now())
+  end_at          DateTime
   teacher_id      Int?
   level_id        Int?
   classes         Classes[]
@@ -72,45 +67,84 @@ model Courses {
   student_courses StudentCourses[]
   Materials       Materials[]
   Questions       Questions[]
+  Attendance      Attendance[]
 
-  @@index([deleted_at], map: "idx_courses_deleted_at")
   @@index([level_id], map: "fk_courses_level")
   @@index([teacher_id], map: "fk_courses_teacher")
+  @@fulltext([description])
   @@map("courses")
 }
 
 model Level {
-  id         Int         @id @default(autoincrement())
-  created_at DateTime?   @default(now())
-  updated_at DateTime?   @updatedAt
-  deleted_at DateTime?
+  id         Int        @id @default(autoincrement())
+  created_at DateTime?  @default(now())
+  updated_at DateTime?  @updatedAt
   name       String
   classes    Classes[]
   courses    Courses[]
-  questions  Questions[]
   students   Students[]
 
-  @@index([deleted_at], map: "idx_levels_deleted_at")
   @@map("levels")
 }
 
 model Questions {
-  id                Int                @id @default(autoincrement())
-  contents          String?
-  type              String?
-  course_id         Int?
-  level_id          Int?
-  exam_id           Int?
-  answers_orders    AnswersOrder[]
-  course            Courses?           @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_questions_class")
-  exam              exams?             @relation(fields: [exam_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_questions_exam")
-  level             Level?             @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_questions_level")
-  student_questions StudentQuestions[]
+  id                    Int                     @id @default(autoincrement())
+  contents              String?
+  type                  String?
+  course_id             Int?
+  exam_id               Int?
+  answers_orders        AnswersOrder[]
+  course                Courses?                @relation(fields: [course_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_questions_class")
+  exam                  exams?                  @relation(fields: [exam_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_questions_exam")
+  student_questions     StudentQuestions[]
+  YesOrNoAnswers        YesOrNoAnswers[]
+  MultiOptionsAnswers   MultiOptionsAnswers[]
+  ReqularQuestionAnswer ReqularQuestionAnswer[]
 
   @@index([course_id], map: "fk_questions_class")
-  @@index([level_id], map: "fk_questions_level")
   @@index([exam_id], map: "fk_questions_exam")
+  @@fulltext([contents])
   @@map("questions")
+}
+
+model ReqularQuestionAnswer {
+  id          Int       @id @default(autoincrement())
+  question    Questions @relation(fields: [question_id], references: [id])
+  question_id Int
+
+  @@map("reqular_question_answer")
+}
+
+model YesOrNoAnswers {
+  id          Int       @id @default(autoincrement())
+  question    Questions @relation(fields: [question_id], references: [id])
+  question_id Int
+  answer      Boolean   @default(false)
+
+  @@map("yes_or_no_answer")
+}
+
+model AnswersOrder {
+  id          Int       @id @default(autoincrement())
+  content     String?
+  num_value   Int?
+  question_id Int
+  questions   Questions @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_answers_orders_question")
+
+  @@index([question_id], map: "fk_answers_orders_question")
+  @@fulltext([content])
+  @@map("answers_orders")
+}
+
+model MultiOptionsAnswers {
+  id          Int       @id @default(autoincrement())
+  content     String
+  correct     Boolean   @default(false)
+  question    Questions @relation(fields: [question_id], references: [id])
+  question_id Int
+
+  @@fulltext([content])
+  @@map("multi_options_answers")
 }
 
 model StudentClasses {
@@ -126,11 +160,12 @@ model StudentClasses {
 
 model StudentCourses {
   student_user_id Int
-  course_id       Int
-  course          Courses  @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_student_courses_course")
+  course_id       Int?
+  course          Courses? @relation(fields: [course_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_student_courses_course")
   student         Students @relation(fields: [student_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_student_courses_student")
 
-  @@id([student_user_id, course_id])
+  @@id([student_user_id])
+  @@unique([student_user_id, course_id])
   @@index([course_id], map: "fk_student_courses_course")
   @@map("student_courses")
 }
@@ -138,6 +173,8 @@ model StudentCourses {
 model Students {
   id                  Int                 @id @default(autoincrement())
   level_id            Int?
+  grade               String
+  birthdate           DateTime
   student_classes     StudentClasses[]
   student_courses     StudentCourses[]
   student_cross_words StudentWrossWords[]
@@ -145,6 +182,7 @@ model Students {
   student_questions   StudentQuestions[]
   level               Level?              @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_level")
   user                users               @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_user")
+  Attendance          Attendance[]
 
   @@index([level_id], map: "fk_students_level")
   @@map("students")
@@ -166,7 +204,6 @@ model users {
   id         Int       @id @default(autoincrement())
   created_at DateTime? @default(now())
   updated_at DateTime? @updatedAt
-  deleted_at DateTime?
   name       String?
   email      String?   @unique
   password   String?
@@ -175,7 +212,6 @@ model users {
   student    Students?
   teacher    Teachers?
 
-  @@index([deleted_at], map: "idx_users_deleted_at")
   @@map("users")
 }
 
@@ -183,7 +219,7 @@ model exams {
   id            Int            @id @default(autoincrement())
   teacher_id    Int?
   course_id     Int?
-  courses       Courses?       @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_exams_course")
+  courses       Courses?       @relation(fields: [course_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_exams_course")
   teachers      Teachers?      @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_exams_teacher")
   questions     Questions[]
   student_exams StudentExams[]
@@ -202,7 +238,7 @@ model CrossWords {
   answer              String?
   clue                String?
   course_id           Int?
-  course              Courses?            @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cross_words_course")
+  course              Courses?            @relation(fields: [course_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_cross_words_course")
   student_cross_words StudentWrossWords[]
 
   @@index([course_id], map: "fk_cross_words_course")
@@ -246,9 +282,9 @@ model Materials {
   id         Int          @id @default(autoincrement())
   type       MaterialType @default(PDF)
   file_path  String
-  course     Courses      @relation(fields: [course_id], references: [id])
+  course     Courses?     @relation(fields: [course_id], references: [id], onDelete: SetNull)
   teacher    Teachers     @relation(fields: [teacher_id], references: [id])
-  course_id  Int
+  course_id  Int?
   teacher_id Int
 
   assignments   Assignments? @relation(fields: [assignment_id], references: [id])
@@ -264,4 +300,15 @@ model Assignments {
   instructions Json
 
   @@map("assignments")
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now())
+  student    Students @relation(fields: [studentsId], references: [id])
+  course     Courses  @relation(fields: [coursesId], references: [id])
+  studentsId Int      @map("student_id")
+  coursesId  Int      @map("course_id")
+
+  @@map("attendance")
 }

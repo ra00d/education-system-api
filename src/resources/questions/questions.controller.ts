@@ -1,34 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { QuestionsService } from './questions.service';
-import { CreateQuestionDto } from './dto/create-question.dto';
-import { UpdateQuestionDto } from './dto/update-question.dto';
+import { Controller, Get, Post, Body } from "@nestjs/common";
+import { QuestionsService } from "./questions.service";
+import {
+	CreateMultOptionQuestionDto,
+	CreateRegularQuestionDto,
+	CreateYesOrNoQuestionDto,
+} from "./dto/create-question.dto";
 
-@Controller('questions')
+@Controller("questions")
 export class QuestionsController {
-  constructor(private readonly questionsService: QuestionsService) {}
+	constructor(private readonly questionsService: QuestionsService) {}
 
-  @Post()
-  create(@Body() createQuestionDto: CreateQuestionDto) {
-    return this.questionsService.create(createQuestionDto);
-  }
+	@Post()
+	createRegularQuestion(@Body() createQuestionDto: CreateRegularQuestionDto) {
+		return this.questionsService.createRegularQuestion(createQuestionDto);
+	}
 
-  @Get()
-  findAll() {
-    return this.questionsService.findAll();
-  }
+	@Post()
+	createYseOrNoQuestion(@Body() createQuestionDto: CreateYesOrNoQuestionDto) {
+		return this.questionsService.createYseOrNoQuestion(createQuestionDto);
+	}
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.questionsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateQuestionDto: UpdateQuestionDto) {
-    return this.questionsService.update(+id, updateQuestionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.questionsService.remove(+id);
-  }
+	@Post()
+	createMultiOptionsQuestion(
+		@Body() createQuestionDto: CreateMultOptionQuestionDto,
+	) {
+		return this.questionsService.createMultiOptionsQuestion(createQuestionDto);
+	}
+	//
+	// @Post()
+	// createRegularQuestion(@Body() createQuestionDto: CreateRegularQuestionDto) {
+	// 	return this.questionsService.createRegularQuestion(createQuestionDto);
+	// }
+	//
+	@Get()
+	findAll() {
+		return this.questionsService.findAll();
+	}
 }

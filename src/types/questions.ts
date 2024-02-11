@@ -1,0 +1,5 @@
+export enum QuestionType {
+	REGULAR = "REGULAR",
+	YESORNO = "YESORNO",
+	MULTIOPTIONS = "MULTIOPTIONS",
+}

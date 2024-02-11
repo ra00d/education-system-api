@@ -23,41 +23,27 @@ export class TeacherService {
 		const pass_hash = await this.commonService.hashPassword(
 			createTeacherDto.password,
 		);
-		try {
-			return await this.databaseService.teachers.create({
-				data: {
-					user: {
-						create: {
-							name: createTeacherDto.name,
-							email: createTeacherDto.email,
-							password: pass_hash,
-							phone: createTeacherDto.phone,
-							role: $Enums.Role.TEACHER,
-						},
+		return await this.databaseService.teachers.create({
+			data: {
+				degree: createTeacherDto.degree,
+				user: {
+					create: {
+						name: createTeacherDto.name,
+						email: createTeacherDto.email,
+						password: pass_hash,
+						phone: createTeacherDto.phone,
+						role: $Enums.Role.TEACHER,
 					},
 				},
-			});
-		} catch (err: unknown) {
-			if (err instanceof PrismaClientKnownRequestError) {
-				if (err.code === "P2002")
-					if (err.meta?.target === "user_email_key") {
-						throw new UnprocessableEntityException(
-							"the email address is allready used",
-
-							{
-								description: "the email address is allready used",
-							},
-						);
-					}
-			}
-			throw new InternalServerErrorException();
-		}
+			},
+		});
 	}
 
 	async findAll(page = 1, limit = 10) {
+		if (page == 0) page = 1;
 		try {
-			const data = await this.databaseService.teachers.paginate(
-				{
+			const [data, meta] = await this.databaseService.teachers
+				.paginate({
 					select: {
 						id: true,
 						degree: true,
@@ -69,23 +55,20 @@ export class TeacherService {
 							},
 						},
 					},
-				},
-				{ page, limit },
-			);
-			const teachers = data.result.map(
-				({ id, user: { name, email, phone } }) => ({
-					id,
-					name,
-					email,
-					phone,
-				}),
-			);
+				})
+				.withPages({
+					limit,
+					page,
+				});
+			const teachers = data.map(({ id, user: { name, email, phone } }) => ({
+				id,
+				name,
+				email,
+				phone,
+			}));
 			return {
-				count: data.count,
-				totalPages: data.totalPages,
-				page: page,
-				pageSize: limit,
 				result: teachers,
+				...meta,
 			};
 		} catch (error) {
 			throw new InternalServerErrorException(error);

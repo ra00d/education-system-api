@@ -1,31 +1,22 @@
 -- CreateTable
-CREATE TABLE `answers_orders` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `content` VARCHAR(191) NULL,
-    `num_value` INTEGER NULL,
-    `question_id` INTEGER NULL,
-
-    INDEX `fk_answers_orders_question`(`question_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `classes` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `room_id` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
-    `deleted_at` DATETIME(3) NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
-    `class_time` DATETIME(3) NULL,
+    `end_at` TIME NOT NULL,
+    `start_at` TIME NOT NULL,
     `course_id` INTEGER NULL,
     `teacher_id` INTEGER NULL,
     `level_id` INTEGER NULL,
 
-    INDEX `idx_classes_deleted_at`(`deleted_at`),
     INDEX `fk_classes_course`(`course_id`),
     INDEX `fk_classes_level`(`level_id`),
     INDEX `fk_classes_teacher`(`teacher_id`),
+    INDEX `room_id_idx`(`room_id`),
+    FULLTEXT INDEX `classes_description_idx`(`description`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -34,15 +25,18 @@ CREATE TABLE `courses` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
-    `deleted_at` DATETIME(3) NULL,
     `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
+    `price` DECIMAL(65, 30) NOT NULL DEFAULT 0,
+    `cover_img` VARCHAR(191) NULL,
+    `start_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `end_at` DATETIME(3) NOT NULL,
     `teacher_id` INTEGER NULL,
     `level_id` INTEGER NULL,
 
-    INDEX `idx_courses_deleted_at`(`deleted_at`),
     INDEX `fk_courses_level`(`level_id`),
     INDEX `fk_courses_teacher`(`teacher_id`),
+    FULLTEXT INDEX `courses_description_idx`(`description`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -51,10 +45,8 @@ CREATE TABLE `levels` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
-    `deleted_at` DATETIME(3) NULL,
     `name` VARCHAR(191) NOT NULL,
 
-    INDEX `idx_levels_deleted_at`(`deleted_at`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -64,12 +56,51 @@ CREATE TABLE `questions` (
     `contents` VARCHAR(191) NULL,
     `type` VARCHAR(191) NULL,
     `course_id` INTEGER NULL,
-    `level_id` INTEGER NULL,
     `exam_id` INTEGER NULL,
 
     INDEX `fk_questions_class`(`course_id`),
-    INDEX `fk_questions_level`(`level_id`),
     INDEX `fk_questions_exam`(`exam_id`),
+    FULLTEXT INDEX `questions_contents_idx`(`contents`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `reqular_question_answer` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `question_id` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `yes_or_no_answer` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `question_id` INTEGER NOT NULL,
+    `answer` BOOLEAN NOT NULL DEFAULT false,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `answers_orders` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `content` VARCHAR(191) NULL,
+    `num_value` INTEGER NULL,
+    `question_id` INTEGER NOT NULL,
+
+    INDEX `fk_answers_orders_question`(`question_id`),
+    FULLTEXT INDEX `answers_orders_content_idx`(`content`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `multi_options_answers` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `content` VARCHAR(191) NOT NULL,
+    `correct` BOOLEAN NOT NULL DEFAULT false,
+    `question_id` INTEGER NOT NULL,
+
+    FULLTEXT INDEX `multi_options_answers_content_idx`(`content`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -85,16 +116,19 @@ CREATE TABLE `student_classes` (
 -- CreateTable
 CREATE TABLE `student_courses` (
     `student_user_id` INTEGER NOT NULL,
-    `course_id` INTEGER NOT NULL,
+    `course_id` INTEGER NULL,
 
     INDEX `fk_student_courses_course`(`course_id`),
-    PRIMARY KEY (`student_user_id`, `course_id`)
+    UNIQUE INDEX `student_courses_student_user_id_course_id_key`(`student_user_id`, `course_id`),
+    PRIMARY KEY (`student_user_id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `students` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `level_id` INTEGER NULL,
+    `grade` VARCHAR(191) NOT NULL,
+    `birthdate` DATETIME(3) NOT NULL,
 
     INDEX `fk_students_level`(`level_id`),
     PRIMARY KEY (`id`)
@@ -113,7 +147,6 @@ CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
-    `deleted_at` DATETIME(3) NULL,
     `name` VARCHAR(191) NULL,
     `email` VARCHAR(191) NULL,
     `password` VARCHAR(191) NULL,
@@ -121,7 +154,6 @@ CREATE TABLE `users` (
     `role` ENUM('ADMIN', 'STUDENT', 'TEACHER') NOT NULL DEFAULT 'STUDENT',
 
     UNIQUE INDEX `users_email_key`(`email`),
-    INDEX `idx_users_deleted_at`(`deleted_at`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -182,7 +214,8 @@ CREATE TABLE `student_questions` (
 CREATE TABLE `materials` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `type` ENUM('PDF', 'DOCX', 'IMAGE', 'VIDEO', 'AUDIO') NOT NULL DEFAULT 'PDF',
-    `course_id` INTEGER NOT NULL,
+    `file_path` VARCHAR(191) NOT NULL,
+    `course_id` INTEGER NULL,
     `teacher_id` INTEGER NOT NULL,
     `assignmentsId` INTEGER NULL,
 
@@ -198,8 +231,14 @@ CREATE TABLE `assignments` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- AddForeignKey
-ALTER TABLE `answers_orders` ADD CONSTRAINT `fk_answers_orders_question` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- CreateTable
+CREATE TABLE `attendance` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `student_id` INTEGER NOT NULL,
+    `course_id` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
 ALTER TABLE `classes` ADD CONSTRAINT `fk_classes_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -217,13 +256,22 @@ ALTER TABLE `courses` ADD CONSTRAINT `fk_courses_level` FOREIGN KEY (`level_id`)
 ALTER TABLE `courses` ADD CONSTRAINT `fk_courses_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `questions` ADD CONSTRAINT `fk_questions_class` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `questions` ADD CONSTRAINT `fk_questions_class` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `questions` ADD CONSTRAINT `fk_questions_exam` FOREIGN KEY (`exam_id`) REFERENCES `exams`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `questions` ADD CONSTRAINT `fk_questions_exam` FOREIGN KEY (`exam_id`) REFERENCES `exams`(`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `questions` ADD CONSTRAINT `fk_questions_level` FOREIGN KEY (`level_id`) REFERENCES `levels`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `reqular_question_answer` ADD CONSTRAINT `reqular_question_answer_question_id_fkey` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `yes_or_no_answer` ADD CONSTRAINT `yes_or_no_answer_question_id_fkey` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `answers_orders` ADD CONSTRAINT `fk_answers_orders_question` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE `multi_options_answers` ADD CONSTRAINT `multi_options_answers_question_id_fkey` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `student_classes` ADD CONSTRAINT `fk_student_classes_class` FOREIGN KEY (`class_id`) REFERENCES `classes`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -232,7 +280,7 @@ ALTER TABLE `student_classes` ADD CONSTRAINT `fk_student_classes_class` FOREIGN 
 ALTER TABLE `student_classes` ADD CONSTRAINT `fk_student_classes_student` FOREIGN KEY (`student_user_id`) REFERENCES `students`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `student_courses` ADD CONSTRAINT `fk_student_courses_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `student_courses` ADD CONSTRAINT `fk_student_courses_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE `student_courses` ADD CONSTRAINT `fk_student_courses_student` FOREIGN KEY (`student_user_id`) REFERENCES `students`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -247,13 +295,13 @@ ALTER TABLE `students` ADD CONSTRAINT `fk_students_user` FOREIGN KEY (`id`) REFE
 ALTER TABLE `teachers` ADD CONSTRAINT `fk_teachers_user` FOREIGN KEY (`id`) REFERENCES `users`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `exams` ADD CONSTRAINT `fk_exams_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `exams` ADD CONSTRAINT `fk_exams_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE `exams` ADD CONSTRAINT `fk_exams_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `cross_words` ADD CONSTRAINT `fk_cross_words_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `cross_words` ADD CONSTRAINT `fk_cross_words_course` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE `student_cross_words` ADD CONSTRAINT `fk_student_cross_words_cross_word` FOREIGN KEY (`cross_word_id`) REFERENCES `cross_words`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -274,10 +322,16 @@ ALTER TABLE `student_questions` ADD CONSTRAINT `fk_student_questions_question` F
 ALTER TABLE `student_questions` ADD CONSTRAINT `fk_student_questions_student` FOREIGN KEY (`student_user_id`) REFERENCES `students`(`id`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE `materials` ADD CONSTRAINT `materials_course_id_fkey` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `materials` ADD CONSTRAINT `materials_course_id_fkey` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `materials` ADD CONSTRAINT `materials_teacher_id_fkey` FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `materials` ADD CONSTRAINT `materials_assignmentsId_fkey` FOREIGN KEY (`assignmentsId`) REFERENCES `assignments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `attendance` ADD CONSTRAINT `attendance_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `students`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `attendance` ADD CONSTRAINT `attendance_course_id_fkey` FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

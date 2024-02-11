@@ -1,39 +1,64 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { CreateQuestionDto } from "./dto/create-question.dto";
-import { UpdateQuestionDto } from "./dto/update-question.dto";
 import { DATABASE } from "src/common/constants";
 import { DatabaseService } from "src/database/database.service";
+import {
+	CreateMultOptionQuestionDto,
+	CreateRegularQuestionDto,
+	CreateYesOrNoQuestionDto,
+} from "./dto/create-question.dto";
 
 @Injectable()
 export class QuestionsService {
 	constructor(
 		@Inject(DATABASE) private readonly databaseService: DatabaseService,
 	) {}
-	async create(createQuestionDto: CreateQuestionDto) {
+	async createRegularQuestion(createQuestionDto: CreateRegularQuestionDto) {
 		const data = await this.databaseService.questions.create({
 			data: {
 				contents: createQuestionDto.content,
-				type: createQuestionDto.type,
-				level_id: createQuestionDto.level,
+				type: CreateRegularQuestionDto.type,
 				course_id: createQuestionDto.course,
 			},
 		});
 		return data;
 	}
-
+	async createYseOrNoQuestion(createQuestionDto: CreateYesOrNoQuestionDto) {
+		const data = await this.databaseService.questions.create({
+			data: {
+				contents: createQuestionDto.content,
+				type: CreateYesOrNoQuestionDto.type,
+				course_id: createQuestionDto.course,
+				YesOrNoAnswers: {
+					create: {
+						answer: createQuestionDto.answer,
+					},
+				},
+			},
+		});
+		return data;
+	}
+	async createMultiOptionsQuestion(
+		createQuestionDto: CreateMultOptionQuestionDto,
+	) {
+		const answers = createQuestionDto.options.map((opt, index) => ({
+			content: opt,
+			correct: createQuestionDto.answer === index + 1,
+		}));
+		const data = await this.databaseService.questions.create({
+			data: {
+				contents: createQuestionDto.content,
+				type: CreateYesOrNoQuestionDto.type,
+				course_id: createQuestionDto.course,
+				MultiOptionsAnswers: {
+					createMany: {
+						data: answers,
+					},
+				},
+			},
+		});
+		return data;
+	}
 	async findAll() {
 		return await this.databaseService.questions.findMany();
-	}
-
-	findOne(id: number) {
-		return `This action returns a #${id} question`;
-	}
-
-	update(id: number, updateQuestionDto: UpdateQuestionDto) {
-		return `This action updates a #${id} question`;
-	}
-
-	remove(id: number) {
-		return `This action removes a #${id} question`;
 	}
 }

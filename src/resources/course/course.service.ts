@@ -13,38 +13,52 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 @Injectable()
 export class CourseService {
 	constructor(@Inject(DATABASE) private databaseService: DatabaseService) {}
-	async create(createCourseDto: CreateCourseDto) {
-		try {
-			await this.databaseService.courses.create({
-				data: {
-					name: createCourseDto.name,
-					level: {
-						connect: {
-							id: createCourseDto.level,
-						},
+
+	async create(createCourseDto: CreateCourseDto, img: string) {
+		// try {
+		await this.databaseService.courses.create({
+			data: {
+				name: createCourseDto.name,
+				level: {
+					connect: {
+						id: createCourseDto.level,
 					},
-					description: createCourseDto.description,
 				},
-			});
-		} catch (error) {
-			throw new InternalServerErrorException(error);
-		}
+				teacher: {
+					connect: {
+						id: 1,
+					},
+				},
+				description: createCourseDto.description,
+				cover_img: `uploads/courses/${img}`,
+				start_at: createCourseDto.start_at,
+				end_at: createCourseDto.end_at,
+				price: createCourseDto.price,
+			},
+		});
+		// } catch (error) {
+		// throw new InternalServerErrorException(error);
+		// }
 	}
 
 	async findAll(page = 1, limit = 10) {
-		try {
-			const data = this.databaseService.courses.paginate(
-				{
-					include: {
-						level: true,
-					},
-				},
-				{ page, limit },
-			);
-			return data;
-		} catch (error) {
-			throw new InternalServerErrorException(error);
-		}
+		// const [data, meta] = await this.databaseService.courses
+		// 	.paginate({
+		// 		include: {
+		// 			level: true,
+		// 		},
+		// 		// where: {
+		// 		// 	description: {
+		// 		// 		search: "arabic course",
+		// 		// 	},
+		// 		// },
+		// 	})
+		// 	.withPages({
+		// 		limit,
+		// 		page,
+		// 	});
+		// return { result: data, ...meta };
+		return await this.databaseService.courses.findMany();
 	}
 
 	async findOne(id: number) {
@@ -57,6 +71,8 @@ export class CourseService {
 					id: true,
 					name: true,
 					description: true,
+					start_at: true,
+					cover_img: true,
 					level: true,
 				},
 			});
@@ -68,30 +84,32 @@ export class CourseService {
 	}
 
 	async update(id: number, { level, ...course }: UpdateCourseDto) {
-		try {
-			return await this.databaseService.courses.update({
-				where: {
-					id: Number(id),
-				},
-				data: {
-					level: level
-						? {
-								connect: {
-									id: level,
-								},
-						  }
-						: undefined,
+		console.log(course);
 
-					name: course.name,
-					description: course.description,
-				},
-			});
-		} catch (error) {
-			return error;
-		}
+		return await this.databaseService.courses.update({
+			where: {
+				id: Number(id),
+			},
+			data: {
+				level: level
+					? {
+							connect: {
+								id: level,
+							},
+					  }
+					: undefined,
+
+				name: course.name,
+				description: course.description,
+			},
+		});
 	}
 
-	remove(id: number) {
-		return `This action removes a #${id} course`;
+	async remove(id: number) {
+		return await this.databaseService.courses.delete({
+			where: {
+				id,
+			},
+		});
 	}
 }

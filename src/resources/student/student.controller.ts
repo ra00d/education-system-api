@@ -23,6 +23,8 @@ export class StudentController {
 
 	@Get()
 	findAll(@Query("page") page: number, @Query("limit") limit: number) {
+		console.log(limit, page);
+
 		return this.studentService.findAll(Number(page), Number(limit));
 	}
 

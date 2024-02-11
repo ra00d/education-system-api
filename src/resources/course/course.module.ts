@@ -1,9 +1,30 @@
-import { Module } from '@nestjs/common';
-import { CourseService } from './course.service';
-import { CourseController } from './course.controller';
+import { Module } from "@nestjs/common";
+import { CourseService } from "./course.service";
+import { CourseController } from "./course.controller";
+import { MulterModule } from "@nestjs/platform-express";
+import * as multer from "multer";
+import { extname } from "path";
 
 @Module({
-  controllers: [CourseController],
-  providers: [CourseService],
+	imports: [
+		MulterModule.register({
+			storage: multer.diskStorage({
+				destination: "./uploads/courses",
+				filename: function (_req, file, cb) {
+					const uniqueSuffix =
+						Date.now() + "-" + Math.round(Math.random() * 1e9);
+					cb(
+						null,
+						file.originalname.split(".")[0] +
+							"-" +
+							uniqueSuffix +
+							extname(file.originalname),
+					);
+				},
+			}),
+		}),
+	],
+	controllers: [CourseController],
+	providers: [CourseService],
 })
 export class CourseModule {}

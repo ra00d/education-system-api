@@ -4,7 +4,7 @@ import {
 	UnauthorizedException,
 } from "@nestjs/common";
 import { Prisma, PrismaClient } from "@prisma/client";
-import extension from "prisma-paginate";
+import { pagination } from "prisma-extension-pagination";
 import * as bcrypt from "bcrypt";
 
 export type DatabaseService = ReturnType<PrismaService["withExtension"]>;
@@ -16,7 +16,7 @@ export type FindManyArgs<Model, Args> = Prisma.Exact<
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
 	constructor() {
-		super({ log: ["query", "info", "error"] });
+		super({ log: ["query", "error", "info"] });
 		// super.$executeRaw
 	}
 
@@ -26,7 +26,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
 	withExtension() {
 		// const client = Prisma.getExtensionContext(this);
-		return this.$extends(extension).$extends({
+		return this.$extends(
+			pagination({
+				pages: {
+					limit: 10,
+					includePageCount: true,
+				},
+			}),
+		).$extends({
 			name: "soft-delete",
 			model: {
 				$allModels: {
@@ -36,7 +43,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 						// model?: Model,
 					) {
 						// console.log(typeof model);
-						args.where = { ...args.where, deleted_at: null };
+						args.where = { ...args.where };
 
 						return await (this as any).findMany(args);
 
