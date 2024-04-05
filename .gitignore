@@ -40,6 +40,6 @@ MakeFile
 *.hcl
 *.todo
 pyproject.toml
-./uploads/*
+uploads
 
 

@@ -30,7 +30,7 @@ export class CreateCourseDto {
 	@Min(10, { message: "this price is too low" })
 	price: number;
 
-	@IsNotEmpty({ message: "course teacher is required" })
-	@IsNumber({ maxDecimalPlaces: 2 }, { message: "invalid value" })
-	teacher: number;
+	// @IsNotEmpty({ message: "course teacher is required" })
+	// @IsNumber({ maxDecimalPlaces: 2 }, { message: "invalid value" })
+	// teacher: number;
 }

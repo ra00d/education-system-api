@@ -22,11 +22,13 @@ export class CourseController {
 
 	@Post()
 	@UseInterceptors(FileInterceptor("cover_img"))
-	@UseInterceptors(new FilesInterceptor())
+	// @UseInterceptors(new FilesInterceptor())
 	create(
 		@Body() createCourseDto: CreateCourseDto,
 		@UploadedFile() cover_img: Express.Multer.File,
 	) {
+		console.log(createCourseDto);
+
 		return this.courseService.create(createCourseDto, cover_img.filename);
 	}
 

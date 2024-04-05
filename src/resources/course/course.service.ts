@@ -15,30 +15,32 @@ export class CourseService {
 	constructor(@Inject(DATABASE) private databaseService: DatabaseService) {}
 
 	async create(createCourseDto: CreateCourseDto, img: string) {
-		// try {
-		await this.databaseService.courses.create({
-			data: {
-				name: createCourseDto.name,
-				level: {
-					connect: {
-						id: createCourseDto.level,
+		console.log(createCourseDto);
+
+		try {
+			await this.databaseService.courses.create({
+				data: {
+					name: createCourseDto.name,
+					level: {
+						connect: {
+							id: 1,
+						},
 					},
-				},
-				teacher: {
-					connect: {
-						id: 1,
+					teacher: {
+						connect: {
+							id: 1,
+						},
 					},
+					description: createCourseDto.description,
+					cover_img: `uploads/courses/${img}`,
+					start_at: createCourseDto.start_at,
+					end_at: createCourseDto.end_at,
+					price: createCourseDto.price,
 				},
-				description: createCourseDto.description,
-				cover_img: `uploads/courses/${img}`,
-				start_at: createCourseDto.start_at,
-				end_at: createCourseDto.end_at,
-				price: createCourseDto.price,
-			},
-		});
-		// } catch (error) {
-		// throw new InternalServerErrorException(error);
-		// }
+			});
+		} catch (error) {
+			throw new InternalServerErrorException(error);
+		}
 	}
 
 	async findAll(page = 1, limit = 10) {
