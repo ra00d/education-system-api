@@ -68,6 +68,7 @@ model Courses {
   Materials       Materials[]
   Questions       Questions[]
   Attendance      Attendance[]
+  Assignments     Assignments[]
 
   @@index([level_id], map: "fk_courses_level")
   @@index([teacher_id], map: "fk_courses_teacher")
@@ -171,7 +172,7 @@ model StudentCourses {
 }
 
 model Students {
-  id                  Int                 @id @default(autoincrement())
+  id                  Int                  @id @default(autoincrement())
   level_id            Int?
   grade               String
   birthdate           DateTime
@@ -180,9 +181,10 @@ model Students {
   student_cross_words StudentWrossWords[]
   student_exams       StudentExams[]
   student_questions   StudentQuestions[]
-  level               Level?              @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_level")
-  user                users               @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_user")
+  level               Level?               @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_level")
+  user                users                @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_user")
   Attendance          Attendance[]
+  StudentAssignments  StudentAssignments[]
 
   @@index([level_id], map: "fk_students_level")
   @@map("students")
@@ -217,9 +219,11 @@ model users {
 
 model exams {
   id            Int            @id @default(autoincrement())
+  name          String
+  date          DateTime
   teacher_id    Int?
-  course_id     Int?
-  courses       Courses?       @relation(fields: [course_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "fk_exams_course")
+  course_id     Int
+  courses       Courses        @relation(fields: [course_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_exams_course")
   teachers      Teachers?      @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_exams_teacher")
   questions     Questions[]
   student_exams StudentExams[]
@@ -283,21 +287,26 @@ model Materials {
   type       MaterialType @default(PDF)
   file_path  String
   course     Courses?     @relation(fields: [course_id], references: [id], onDelete: SetNull)
-  teacher    Teachers     @relation(fields: [teacher_id], references: [id])
+  teacher    Teachers?    @relation(fields: [teacher_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
   course_id  Int?
-  teacher_id Int
+  teacher_id Int?
 
   assignments   Assignments? @relation(fields: [assignment_id], references: [id])
-  assignment_id Int?         @map("assignmentsId")
+  assignment_id Int?         @map("assignments_id")
 
   @@map("materials")
 }
 
 model Assignments {
-  id           Int         @id @default(autoincrement())
-  materials    Materials[]
-  dead_line    DateTime
-  instructions Json
+  id                 Int                  @id @default(autoincrement())
+  materials          Materials[]
+  dead_line          DateTime
+  instructions       String               @db.Text
+  course             Courses?             @relation(fields: [courses_id], references: [id])
+  courses_id         Int?
+  StudentAssignments StudentAssignments[]
+
+  mark Int
 
   @@map("assignments")
 }
@@ -311,4 +320,17 @@ model Attendance {
   coursesId  Int      @map("course_id")
 
   @@map("attendance")
+}
+
+model StudentAssignments {
+  id Int @id @default(autoincrement())
+
+  student_id    Int
+  assignment_id Int
+  student       Students     @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_student_assignments_student")
+  assignment    Assignments? @relation(fields: [assignmentsId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  assignmentsId Int?
+  mark          Int
+
+  @@map("student_assignments")
 }

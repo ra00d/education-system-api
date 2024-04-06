@@ -1,6 +1,6 @@
-import { Logger, Module } from '@nestjs/common';
-import { MaterialsService } from './materials.service';
-import { MaterialsController } from './materials.controller';
+import { Module } from '@nestjs/common';
+import { AssignmentsService } from './assignments.service';
+import { AssignmentsController } from './assignments.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import * as multer from 'multer';
 import { extname } from 'path';
@@ -9,7 +9,7 @@ import { extname } from 'path';
   imports: [
     MulterModule.register({
       storage: multer.diskStorage({
-        destination: './uploads',
+        destination: './uploads/assignments',
         filename: function (_req, file, cb) {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -24,7 +24,7 @@ import { extname } from 'path';
       }),
     }),
   ],
-  controllers: [MaterialsController],
-  providers: [MaterialsService, Logger],
+  controllers: [AssignmentsController],
+  providers: [AssignmentsService],
 })
-export class MaterialsModule {}
+export class AssignmentsModule {}
