@@ -16,7 +16,7 @@ export type FindManyArgs<Model, Args> = Prisma.Exact<
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
 	constructor() {
-		super({ log: ["query", "error", "info"] });
+		super();
 		// super.$executeRaw
 	}
 
